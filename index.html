@@ -3,71 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LMS Siswa</title>
+    <title>LMS Siswa Modern</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-login {
+            border: none;
+            border-radius: 1.25rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .input-group-text {
+            background-color: #f8fafc;
+            border-right: none;
+            color: #64748b;
+        }
+
+        .form-control {
+            border-left: none;
+            background-color: #f8fafc;
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus {
+            background-color: #ffffff;
+            box-shadow: none;
+            border-color: #dee2e6;
+        }
+
+        .btn-primary-custom {
+            background-color: #4f46e5;
+            border: none;
+            padding: 0.75rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn-primary-custom:hover {
+            background-color: #4338ca;
+        }
+
+        .btn-primary-custom:active {
+            transform: scale(0.98);
+        }
+
+        .dashboard-container {
+            background: #ffffff;
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
 <!-- AREA LOGIN -->
-<div class="container mt-5" id="loginArea">
+<div class="container py-5" id="loginArea">
     <div class="row justify-content-center">
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h4 class="text-center mb-4">Login LMS</h4>
-                    <input type="text" id="idSiswa" class="form-control mb-3" placeholder="ID Siswa">
-                    <input type="password" id="password" class="form-control mb-3" placeholder="Password">
-                    <button class="btn btn-primary w-100" onclick="login()">Masuk</button>
-                    <p id="msg" class="text-danger mt-2 text-center"></p>
+        <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
+            <div class="card card-login p-4 p-sm-5 fade-in">
+                <div class="text-center mb-4">
+                    <div class="bg-primary text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-mortarboard-fill fs-2"></i>
+                    </div>
+                    <h3 class="fw-bold text-dark">LMS Siswa</h3>
+                    <p class="text-muted small">Silakan masuk ke akun Anda</p>
                 </div>
+
+                <form onsubmit="event.preventDefault(); login();">
+                    <!-- ID Siswa Input -->
+                    <div class="mb-3">
+                        <label for="idSiswa" class="form-label small text-muted fw-semibold">ID SISWA</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" id="idSiswa" class="form-control" placeholder="Masukkan ID Siswa" required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="mb-4">
+                        <label for="password" class="form-label small text-muted fw-semibold">PASSWORD</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" id="password" class="form-control" placeholder="Masukkan Password" required autocomplete="current-password">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility()">
+                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Button Login -->
+                    <button class="btn btn-primary btn-primary-custom w-100 mb-3" id="btnLogin" type="submit">
+                        <span id="btnText"><i class="bi bi-box-arrow-in-right me-2"></i>Masuk</span>
+                    </button>
+
+                    <!-- Error / Status Message -->
+                    <div id="msg" class="text-danger small text-center min-height-24"></div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 <!-- AREA DASHBOARD SISWA -->
-<div class="container mt-5 d-none" id="dashboardArea">
-    <div class="d-flex justify-content-between align-items-center">
-        <h3>Selamat Datang, <span id="namaSiswa"></span>!</h3>
-        <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
-    </div>
-    <hr>
-    
-    <!-- TABEL DAFTAR TUGAS -->
-    <h5 class="mt-4">Daftar Tugas</h5>
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped mt-2">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID Tugas</th>
-                    <th>Judul Tugas</th>
-                    <th>Deskripsi</th>
-                    <th>Deadline</th>
-                </tr>
-            </thead>
-            <tbody id="tabelTugas">
-                <tr><td colspan="4" class="text-center">Memuat tugas...</td></tr>
-            </tbody>
-        </table>
+<div class="container py-5 d-none fade-in" id="dashboardArea">
+    <div class="dashboard-container p-4 p-md-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                    <i class="bi bi-person-circle fs-3"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0">Selamat Datang, <span id="namaSiswa" class="text-primary"></span>!</h4>
+                    <small class="text-muted">Panel Tugas & Pembelajaran</small>
+                </div>
+            </div>
+            <button class="btn btn-outline-danger btn-sm px-3 rounded-pill" onclick="logout()">
+                <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </button>
+        </div>
+
+        <hr class="text-secondary opacity-25">
+
+        <!-- TABEL DAFTAR TUGAS -->
+        <div class="mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-journal-bookmark me-2 text-primary"></i>Daftar Tugas</h5>
+            </div>
+            <div class="table-responsive rounded-3 border">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="py-3">ID Tugas</th>
+                            <th scope="col" class="py-3">Judul Tugas</th>
+                            <th scope="col" class="py-3">Deskripsi</th>
+                            <th scope="col" class="py-3 text-center">Deadline</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelTugas">
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                <div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>
+                                Memuat tugas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- Bootstrap Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-    // ⚠️ GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzrVr8PS057ufiG7bEIyE9pdRN54Od2d2MijboXYToluWjlJKb8leVGqkWKprqp854-/exec";
 
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById("password");
+        const toggleIcon = document.getElementById("toggleIcon");
+        
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            toggleIcon.classList.remove("bi-eye");
+            toggleIcon.classList.add("bi-eye-slash");
+        } else {
+            passwordInput.type = "password";
+            toggleIcon.classList.remove("bi-eye-slash");
+            toggleIcon.classList.add("bi-eye");
+        }
+    }
+
     async function login() {
-        const idSiswa = document.getElementById("idSiswa").value;
-        const password = document.getElementById("password").value;
+        const idSiswa = document.getElementById("idSiswa").value.trim();
+        const password = document.getElementById("password").value.trim();
         const msg = document.getElementById("msg");
+        const btnLogin = document.getElementById("btnLogin");
+        const btnText = document.getElementById("btnText");
 
         if (!idSiswa || !password) {
-            msg.innerHTML = "Isi ID dan Password!";
+            msg.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>Isi ID dan Password!';
             return;
         }
 
-        msg.innerHTML = "Memeriksa...";
+        // Set state loading pada tombol
+        btnLogin.disabled = true;
+        btnText.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Memeriksa...';
+        msg.innerHTML = "";
 
         try {
             const response = await fetch(GAS_URL, {
@@ -80,20 +228,28 @@
                 document.getElementById("loginArea").classList.add("d-none");
                 document.getElementById("dashboardArea").classList.remove("d-none");
                 document.getElementById("namaSiswa").innerText = result.user.nama;
-                
-                // Panggil fungsi untuk mengambil daftar tugas
                 muatTugas();
             } else {
-                msg.innerHTML = result.message;
+                msg.innerHTML = `<i class="bi bi-x-circle me-1"></i>${result.message}`;
             }
         } catch (error) {
-            msg.innerHTML = "Terjadi kesalahan koneksi.";
+            msg.innerHTML = '<i class="bi bi-wifi-off me-1"></i>Terjadi kesalahan koneksi.';
+        } finally {
+            // Mengembalikan tombol ke kondisi awal
+            btnLogin.disabled = false;
+            btnText.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Masuk';
         }
     }
 
     async function muatTugas() {
         const tabel = document.getElementById("tabelTugas");
-        tabel.innerHTML = '<tr><td colspan="4" class="text-center">Memuat data dari Spreadsheet...</td></tr>';
+        tabel.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>
+                    Memuat data dari Spreadsheet...
+                </td>
+            </tr>`;
         
         try {
             const response = await fetch(GAS_URL, {
@@ -105,25 +261,25 @@
             if (result.status === "success") {
                 tabel.innerHTML = "";
                 if (result.tugas.length === 0) {
-                    tabel.innerHTML = '<tr><td colspan="4" class="text-center">Belum ada tugas.</td></tr>';
+                    tabel.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-inbox me-2"></i>Belum ada tugas.</td></tr>';
                     return;
                 }
 
                 result.tugas.forEach(t => {
                     tabel.innerHTML += `
                         <tr>
-                            <td>${t.idTugas}</td>
-                            <td><strong>${t.judul}</strong></td>
-                            <td>${t.deskripsi}</td>
-                            <td><span class="badge bg-warning text-dark">${t.deadline}</span></td>
+                            <td><span class="fw-semibold text-secondary">#${t.idTugas}</span></td>
+                            <td><strong class="text-dark">${t.judul}</strong></td>
+                            <td class="text-muted">${t.deskripsi}</td>
+                            <td class="text-center"><span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-2 py-1">${t.deadline}</span></td>
                         </tr>
                     `;
                 });
             } else {
-                tabel.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${result.message}</td></tr>`;
+                tabel.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>${result.message}</td></tr>`;
             }
         } catch (error) {
-            tabel.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Gagal memuat tugas dari server.</td></tr>';
+            tabel.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4"><i class="bi bi-wifi-off me-2"></i>Gagal memuat tugas dari server.</td></tr>';
         }
     }
 
