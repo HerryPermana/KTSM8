@@ -29,6 +29,30 @@
     <h3>Selamat Datang, <span id="namaSiswa"></span>!</h3>
     <hr>
     <!-- Komponen Dashboard lainnya (Tugas, Upload, dll) -->
+<div class="container mt-5 d-none" id="dashboardArea">
+    <h3>Selamat Datang, <span id="namaSiswa"></span>!</h3>
+    <hr>
+    
+    <!-- Wadah Tabel Tugas -->
+    <h5 class="mt-4">Daftar Tugas Anda</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped mt-2">
+            <thead class="table-dark">
+                <tr>
+                    <th>Judul Tugas</th>
+                    <th>Deskripsi</th>
+                    <th>Deadline</th>
+                </tr>
+            </thead>
+            <tbody id="tabelTugas">
+                <tr><td colspan="3" class="text-center">Memuat tugas...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn btn-danger mt-3" onclick="logout()">Logout</button>
+</div>
+    
     <button class="btn btn-danger" onclick="logout()">Logout</button>
 </div>
 
@@ -69,6 +93,39 @@
         localStorage.removeItem("user");
         location.reload();
     }
+
+    // Panggil muatTugas() begitu siswa berhasil login
+async function muatTugas() {
+    const tabel = document.getElementById("tabelTugas");
+    
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "getTugas" })
+        });
+        const result = await response.json();
+
+        if (result.status === "success") {
+            tabel.innerHTML = "";
+            if (result.tugas.length === 0) {
+                tabel.innerHTML = '<tr><td colspan="3" class="text-center">Belum ada tugas.</td></tr>';
+                return;
+            }
+
+            result.tugas.forEach(t => {
+                tabel.innerHTML += `
+                    <tr>
+                        <td><strong>${t.judul}</strong></td>
+                        <td>${t.deskripsi}</td>
+                        <td><span class="badge bg-warning text-dark">${t.deadline}</span></td>
+                    </tr>
+                `;
+            });
+        }
+    } catch (error) {
+        tabel.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Gagal memuat tugas.</td></tr>';
+    }
+}
 </script>
 
 </body>
