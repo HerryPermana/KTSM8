@@ -73,16 +73,16 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbynHMO8EvYmaynrqtkAP2jb6V-t-cw2bj9Kxxh2CMkGyV3X34E088Qo8yw12u4FAWH0/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxdaXyz-M_tp38LBirEyXjLFcjGcVjrAON_7x81OIfkKHzPnRRoZ-1nsWYIus1vNB-8/exec";
 
     let currentUser = null;
     let dataSoalGlobal = [];
     let jumlahPelanggaran = 0;
-    let sisaWaktu = 3600; // 60 menit
+    let sisaWaktu = 3600;
     let timerInterval;
     let selectedMapelId = "";
+    let isExamFinished = false; // FLAG BARU: Menandai status ujian selesai
 
-    // Fungsi Verifikasi Login ke Spreadsheet
     async function prosesLogin(e) {
         e.preventDefault();
         const btn = document.getElementById("btnLogin");
@@ -147,14 +147,17 @@
         document.addEventListener('paste', e => e.preventDefault());
 
         document.addEventListener("visibilitychange", () => {
-            if (document.hidden) catatPelanggaran("Dilarang berpindah tab!");
+            if (document.hidden && !isExamFinished) catatPelanggaran("Dilarang berpindah tab!");
         });
         window.addEventListener("blur", () => {
-            catatPelanggaran("Dilarang keluar dari area ujian!");
+            if (!isExamFinished) catatPelanggaran("Dilarang keluar dari area ujian!");
         });
     }
 
     function catatPelanggaran(pesan) {
+        // Hentikan fungsi jika ujian sudah selesai
+        if (isExamFinished) return;
+
         jumlahPelanggaran++;
         document.getElementById("pelanggaranBadge").innerText = `Pelanggaran: ${jumlahPelanggaran}/3`;
         alert(`Peringatan (${jumlahPelanggaran}/3): ${pesan}`);
@@ -172,6 +175,7 @@
 
     function jalankanTimer() {
         timerInterval = setInterval(() => {
+            if (isExamFinished) return;
             sisaWaktu--;
             let m = Math.floor(sisaWaktu / 60);
             let s = sisaWaktu % 60;
@@ -246,7 +250,17 @@
     }
 
     async function kumpulkanUjian() {
+        // Cegah eksekusi ganda saat fungsi sudah dipanggil sekali
+        if (isExamFinished) return;
+        isExamFinished = true; 
+
         clearInterval(timerInterval);
+
+        // Keluar dari mode Fullscreen jika aktif
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+
         let jawabanList = [];
 
         dataSoalGlobal.forEach(s => {
