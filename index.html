@@ -9,6 +9,7 @@
 </head>
 <body class="bg-light">
 
+<!-- AREA LOGIN -->
 <div class="container mt-5" id="loginArea">
     <div class="row justify-content-center">
         <div class="col-md-4">
@@ -25,45 +26,46 @@
     </div>
 </div>
 
+<!-- AREA DASHBOARD SISWA -->
 <div class="container mt-5 d-none" id="dashboardArea">
-    <h3>Selamat Datang, <span id="namaSiswa"></span>!</h3>
-    <hr>
-    <!-- Komponen Dashboard lainnya (Tugas, Upload, dll) -->
-<div class="container mt-5 d-none" id="dashboardArea">
-    <h3>Selamat Datang, <span id="namaSiswa"></span>!</h3>
+    <div class="d-flex justify-content-between align-items-center">
+        <h3>Selamat Datang, <span id="namaSiswa"></span>!</h3>
+        <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+    </div>
     <hr>
     
-    <!-- Wadah Tabel Tugas -->
-    <h5 class="mt-4">Daftar Tugas Anda</h5>
+    <!-- TABEL DAFTAR TUGAS -->
+    <h5 class="mt-4">Daftar Tugas</h5>
     <div class="table-responsive">
         <table class="table table-bordered table-striped mt-2">
             <thead class="table-dark">
                 <tr>
+                    <th>ID Tugas</th>
                     <th>Judul Tugas</th>
                     <th>Deskripsi</th>
                     <th>Deadline</th>
                 </tr>
             </thead>
             <tbody id="tabelTugas">
-                <tr><td colspan="3" class="text-center">Memuat tugas...</td></tr>
+                <tr><td colspan="4" class="text-center">Memuat tugas...</td></tr>
             </tbody>
         </table>
     </div>
-
-    <button class="btn btn-danger mt-3" onclick="logout()">Logout</button>
-</div>
-    
-    <button class="btn btn-danger" onclick="logout()">Logout</button>
 </div>
 
 <script>
-    // URL Web App GAS Anda
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzuCgxMGJ_QDOP7a062NsYrqe5yOfRgOCKX24iEZit2kns8o1_e6UAM3BMHw2-l1QE/exec";
+    // ⚠️ GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzrVr8PS057ufiG7bEIyE9pdRN54Od2d2MijboXYToluWjlJKb8leVGqkWKprqp854-/exec";
 
     async function login() {
         const idSiswa = document.getElementById("idSiswa").value;
         const password = document.getElementById("password").value;
         const msg = document.getElementById("msg");
+
+        if (!idSiswa || !password) {
+            msg.innerHTML = "Isi ID dan Password!";
+            return;
+        }
 
         msg.innerHTML = "Memeriksa...";
 
@@ -79,8 +81,8 @@
                 document.getElementById("dashboardArea").classList.remove("d-none");
                 document.getElementById("namaSiswa").innerText = result.user.nama;
                 
-                // Simpan sesi di LocalStorage
-                localStorage.setItem("user", JSON.stringify(result.user));
+                // Panggil fungsi untuk mengambil daftar tugas
+                muatTugas();
             } else {
                 msg.innerHTML = result.message;
             }
@@ -89,43 +91,45 @@
         }
     }
 
+    async function muatTugas() {
+        const tabel = document.getElementById("tabelTugas");
+        tabel.innerHTML = '<tr><td colspan="4" class="text-center">Memuat data dari Spreadsheet...</td></tr>';
+        
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "getTugas" })
+            });
+            const result = await response.json();
+
+            if (result.status === "success") {
+                tabel.innerHTML = "";
+                if (result.tugas.length === 0) {
+                    tabel.innerHTML = '<tr><td colspan="4" class="text-center">Belum ada tugas.</td></tr>';
+                    return;
+                }
+
+                result.tugas.forEach(t => {
+                    tabel.innerHTML += `
+                        <tr>
+                            <td>${t.idTugas}</td>
+                            <td><strong>${t.judul}</strong></td>
+                            <td>${t.deskripsi}</td>
+                            <td><span class="badge bg-warning text-dark">${t.deadline}</span></td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tabel.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${result.message}</td></tr>`;
+            }
+        } catch (error) {
+            tabel.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Gagal memuat tugas dari server.</td></tr>';
+        }
+    }
+
     function logout() {
-        localStorage.removeItem("user");
         location.reload();
     }
-
-    // Panggil muatTugas() begitu siswa berhasil login
-async function muatTugas() {
-    const tabel = document.getElementById("tabelTugas");
-    
-    try {
-        const response = await fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: "getTugas" })
-        });
-        const result = await response.json();
-
-        if (result.status === "success") {
-            tabel.innerHTML = "";
-            if (result.tugas.length === 0) {
-                tabel.innerHTML = '<tr><td colspan="3" class="text-center">Belum ada tugas.</td></tr>';
-                return;
-            }
-
-            result.tugas.forEach(t => {
-                tabel.innerHTML += `
-                    <tr>
-                        <td><strong>${t.judul}</strong></td>
-                        <td>${t.deskripsi}</td>
-                        <td><span class="badge bg-warning text-dark">${t.deadline}</span></td>
-                    </tr>
-                `;
-            });
-        }
-    } catch (error) {
-        tabel.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Gagal memuat tugas.</td></tr>';
-    }
-}
 </script>
 
 </body>
