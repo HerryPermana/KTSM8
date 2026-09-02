@@ -12,25 +12,52 @@
 </head>
 <body class="bg-light">
 
+<!-- Header Status & Timer -->
 <div class="warning-box d-none" id="statusHeader">
     <span class="badge bg-danger p-2" id="timer">Waktu: --:--</span>
     <span class="badge bg-warning text-dark p-2" id="pelanggaranBadge">Pelanggaran: 0/3</span>
 </div>
 
-<div class="container mt-5" id="pilihMapelArea" style="max-width: 500px;">
+<!-- 1. TAMPILAN LOGIN SISWA -->
+<div class="container mt-5" id="loginArea" style="max-width: 450px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white text-center">
+            <h4 class="mb-0">Login Ujian Siswa</h4>
+        </div>
+        <div class="card-body">
+            <form id="formLogin" onsubmit="prosesLogin(event)">
+                <div class="mb-3">
+                    <label class="form-label font-weight-bold">ID Siswa / NIS</label>
+                    <input type="text" id="inputUsername" class="form-control" placeholder="Masukkan ID Siswa" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label font-weight-bold">Password</label>
+                    <input type="password" id="inputPassword" class="form-control" placeholder="Masukkan Password" required>
+                </div>
+                <button type="submit" id="btnLogin" class="btn btn-primary w-100">Masuk Ujian</button>
+            </form>
+            <div id="loginMsg" class="mt-3 text-center"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. TAMPILAN PILIH MAPEL -->
+<div class="container mt-5 d-none" id="pilihMapelArea" style="max-width: 500px;">
     <div class="card shadow-sm">
         <div class="card-body">
-            <h4 class="card-title mb-3 text-center">Pilih Ujian Mata Pelajaran</h4>
+            <h4 class="card-title mb-1 text-center">Pilih Mata Pelajaran</h4>
+            <p class="text-center text-muted mb-3" id="infoSiswa">Selamat Datang</p>
             <div class="mb-3">
                 <select id="selectMapelUjian" class="form-select">
                     <option value="">Memuat daftar mapel...</option>
                 </select>
             </div>
-            <button class="btn btn-primary w-100" onclick="mulaiUjian()">Mulai Ujian</button>
+            <button class="btn btn-success w-100" onclick="mulaiUjian()">Mulai Ujian</button>
         </div>
     </div>
 </div>
 
+<!-- 3. TAMPILAN SOAL UJIAN -->
 <div class="container mt-4 mb-5 d-none" id="areaUjian">
     <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -46,18 +73,60 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxc59P1LV44mizVO-wLqV5EeHikNB_VkMdBmXjgmPZ5K2Y6Gj8AgiH9THEJ74L5NyaK/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbynHMO8EvYmaynrqtkAP2jb6V-t-cw2bj9Kxxh2CMkGyV3X34E088Qo8yw12u4FAWH0/exec";
+
+    let currentUser = null;
     let dataSoalGlobal = [];
     let jumlahPelanggaran = 0;
     let sisaWaktu = 3600; // 60 menit
     let timerInterval;
     let selectedMapelId = "";
 
+    // Fungsi Verifikasi Login ke Spreadsheet
+    async function prosesLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById("btnLogin");
+        const msg = document.getElementById("loginMsg");
+        const username = document.getElementById("inputUsername").value;
+        const password = document.getElementById("inputPassword").value;
+
+        btn.disabled = true;
+        msg.innerHTML = '<span class="text-primary">Memeriksa akun...</span>';
+
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({
+                    action: "login",
+                    username: username,
+                    password: password
+                })
+            });
+            const data = await res.json();
+
+            if (data.status === "success") {
+                currentUser = data.user;
+                document.getElementById("loginArea").classList.add("d-none");
+                document.getElementById("pilihMapelArea").classList.remove("d-none");
+                document.getElementById("infoSiswa").innerText = `Siswa: ${currentUser.nama} (${currentUser.kelas})`;
+                loadMapelUjian();
+            } else {
+                msg.innerHTML = `<span class="text-danger">${data.message}</span>`;
+            }
+        } catch (err) {
+            msg.innerHTML = '<span class="text-danger">Gagal menghubungi server.</span>';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     async function loadMapelUjian() {
         const select = document.getElementById("selectMapelUjian");
         try {
             const res = await fetch(GAS_URL, {
                 method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "getMapel" })
             });
             const data = await res.json();
@@ -134,6 +203,7 @@
         try {
             const res = await fetch(GAS_URL, {
                 method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "getSoal", idMapel: selectedMapelId })
             });
             const data = await res.json();
@@ -196,15 +266,15 @@
             }
         });
 
-        const user = JSON.parse(localStorage.getItem("user")) || { id: "GUEST" };
         document.getElementById("containerSoal").innerHTML = "Mengirim jawaban...";
 
         try {
             const res = await fetch(GAS_URL, {
                 method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({
                     action: "submitUjian",
-                    idSiswa: user.id,
+                    idSiswa: currentUser ? currentUser.id : "GUEST",
                     idMapel: selectedMapelId,
                     jawaban: jawabanList,
                     pelanggaran: jumlahPelanggaran
@@ -219,8 +289,6 @@
             alert("Gagal mengirim jawaban.");
         }
     }
-
-    window.onload = loadMapelUjian;
 </script>
 </body>
 </html>
