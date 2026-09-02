@@ -1,1 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Siswa</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
 
+<div class="container mt-5" id="loginArea">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="text-center mb-4">Login LMS</h4>
+                    <input type="text" id="idSiswa" class="form-control mb-3" placeholder="ID Siswa">
+                    <input type="password" id="password" class="form-control mb-3" placeholder="Password">
+                    <button class="btn btn-primary w-100" onclick="login()">Masuk</button>
+                    <p id="msg" class="text-danger mt-2 text-center"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5 d-none" id="dashboardArea">
+    <h3>Selamat Datang, <span id="namaSiswa"></span>!</h3>
+    <hr>
+    <!-- Komponen Dashboard lainnya (Tugas, Upload, dll) -->
+    <button class="btn btn-danger" onclick="logout()">Logout</button>
+</div>
+
+<script>
+    // URL Web App GAS Anda
+    const GAS_URL = "MASUKKAN_URL_WEB_APP_GAS_DI_SINI";
+
+    async function login() {
+        const idSiswa = document.getElementById("idSiswa").value;
+        const password = document.getElementById("password").value;
+        const msg = document.getElementById("msg");
+
+        msg.innerHTML = "Memeriksa...";
+
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "login", username: idSiswa, password: password })
+            });
+            const result = await response.json();
+
+            if (result.status === "success") {
+                document.getElementById("loginArea").classList.add("d-none");
+                document.getElementById("dashboardArea").classList.remove("d-none");
+                document.getElementById("namaSiswa").innerText = result.user.nama;
+                
+                // Simpan sesi di LocalStorage
+                localStorage.setItem("user", JSON.stringify(result.user));
+            } else {
+                msg.innerHTML = result.message;
+            }
+        } catch (error) {
+            msg.innerHTML = "Terjadi kesalahan koneksi.";
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("user");
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
