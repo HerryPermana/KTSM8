@@ -1,1 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian Online LMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { user-select: none; }
+        .warning-box { position: fixed; top: 10px; right: 10px; z-index: 9999; }
+    </style>
+</head>
+<body class="bg-light">
 
+<div class="warning-box d-none" id="statusHeader">
+    <span class="badge bg-danger p-2" id="timer">Waktu: --:--</span>
+    <span class="badge bg-warning text-dark p-2" id="pelanggaranBadge">Pelanggaran: 0/3</span>
+</div>
+
+<div class="container mt-5" id="pilihMapelArea" style="max-width: 500px;">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h4 class="card-title mb-3 text-center">Pilih Ujian Mata Pelajaran</h4>
+            <div class="mb-3">
+                <select id="selectMapelUjian" class="form-select">
+                    <option value="">Memuat daftar mapel...</option>
+                </select>
+            </div>
+            <button class="btn btn-primary w-100" onclick="mulaiUjian()">Mulai Ujian</button>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4 mb-5 d-none" id="areaUjian">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0" id="judulMapel">Ujian Online</h5>
+            <button class="btn btn-sm btn-light" onclick="mintaFullscreen()">Mode Fullscreen</button>
+        </div>
+        <div class="card-body">
+            <div id="containerSoal">Memuat soal...</div>
+            <hr>
+            <button class="btn btn-success w-100 mt-3" onclick="kumpulkanUjian()">Kumpulkan Jawaban</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const GAS_URL = "MASUKKAN_URL_WEB_APP_GAS_DI_SINI";
+    let dataSoalGlobal = [];
+    let jumlahPelanggaran = 0;
+    let sisaWaktu = 3600; // 60 menit
+    let timerInterval;
+    let selectedMapelId = "";
+
+    async function loadMapelUjian() {
+        const select = document.getElementById("selectMapelUjian");
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "getMapel" })
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+                select.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+                data.mapel.forEach(m => {
+                    select.innerHTML += `<option value="${m.idMapel}">${m.namaMapel}</option>`;
+                });
+            }
+        } catch (e) {
+            select.innerHTML = '<option value="">Gagal memuat mapel</option>';
+        }
+    }
+
+    function aktifkanAntiCheating() {
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('paste', e => e.preventDefault());
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) catatPelanggaran("Dilarang berpindah tab!");
+        });
+        window.addEventListener("blur", () => {
+            catatPelanggaran("Dilarang keluar dari area ujian!");
+        });
+    }
+
+    function catatPelanggaran(pesan) {
+        jumlahPelanggaran++;
+        document.getElementById("pelanggaranBadge").innerText = `Pelanggaran: ${jumlahPelanggaran}/3`;
+        alert(`Peringatan (${jumlahPelanggaran}/3): ${pesan}`);
+        if (jumlahPelanggaran >= 3) {
+            alert("Batas pelanggaran terlampaui. Ujian dikumpulkan otomatis.");
+            kumpulkanUjian();
+        }
+    }
+
+    function mintaFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+    }
+
+    function jalankanTimer() {
+        timerInterval = setInterval(() => {
+            sisaWaktu--;
+            let m = Math.floor(sisaWaktu / 60);
+            let s = sisaWaktu % 60;
+            document.getElementById("timer").innerText = `Waktu: ${m}:${s < 10 ? '0' : ''}${s}`;
+            if (sisaWaktu <= 0) {
+                clearInterval(timerInterval);
+                alert("Waktu habis!");
+                kumpulkanUjian();
+            }
+        }, 1000);
+    }
+
+    async function mulaiUjian() {
+        const select = document.getElementById("selectMapelUjian");
+        selectedMapelId = select.value;
+        if (!selectedMapelId) {
+            alert("Pilih Mata Pelajaran!");
+            return;
+        }
+
+        document.getElementById("pilihMapelArea").classList.add("d-none");
+        document.getElementById("areaUjian").classList.remove("d-none");
+        document.getElementById("statusHeader").classList.remove("d-none");
+        document.getElementById("judulMapel").innerText = `Ujian: ${select.options[select.selectedIndex].text}`;
+
+        mintaFullscreen();
+        aktifkanAntiCheating();
+
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "getSoal", idMapel: selectedMapelId })
+            });
+            const data = await res.json();
+            if (data.status === "success" && data.soal.length > 0) {
+                dataSoalGlobal = data.soal;
+                renderSoal(data.soal);
+                jalankanTimer();
+            } else {
+                document.getElementById("containerSoal").innerHTML = '<p class="text-danger">Belum ada soal untuk mata pelajaran ini.</p>';
+            }
+        } catch (e) {
+            document.getElementById("containerSoal").innerText = "Gagal memuat soal.";
+        }
+    }
+
+    function renderSoal(soalArray) {
+        let html = "";
+        soalArray.forEach((s, i) => {
+            html += `<div class="mb-4 p-3 border rounded bg-white">`;
+            html += `<p><strong>${i + 1}. ${s.pertanyaan}</strong></p>`;
+
+            if (s.tipe === "PG_SEDERHANA") {
+                s.opsi.forEach(o => {
+                    html += `<div class="form-check"><input class="form-check-input" type="radio" name="soal_${s.idSoal}" value="${o}"><label class="form-check-label">${o}</label></div>`;
+                });
+            } else if (s.tipe === "PGK_MCMA") {
+                s.opsi.forEach(o => {
+                    html += `<div class="form-check"><input class="form-check-input" type="checkbox" name="soal_${s.idSoal}" value="${o}"><label class="form-check-label">${o}</label></div>`;
+                });
+            } else if (s.tipe === "PGK_KATEGORI") {
+                html += `<table class="table table-bordered"><thead><tr><th>Pernyataan</th><th width="80">Benar</th><th width="80">Salah</th></tr></thead><tbody>`;
+                s.opsi.forEach((p, pIdx) => {
+                    html += `<tr><td>${p}</td><td><input type="radio" name="soal_${s.idSoal}_${pIdx}" value="Benar"></td><td><input type="radio" name="soal_${s.idSoal}_${pIdx}" value="Salah"></td></tr>`;
+                });
+                html += `</tbody></table>`;
+            }
+            html += `</div>`;
+        });
+        document.getElementById("containerSoal").innerHTML = html;
+    }
+
+    async function kumpulkanUjian() {
+        clearInterval(timerInterval);
+        let jawabanList = [];
+
+        dataSoalGlobal.forEach(s => {
+            if (s.tipe === "PG_SEDERHANA") {
+                let el = document.querySelector(`input[name="soal_${s.idSoal}"]:checked`);
+                jawabanList.push({ idSoal: s.idSoal, jawaban: el ? el.value : "" });
+            } else if (s.tipe === "PGK_MCMA") {
+                let els = document.querySelectorAll(`input[name="soal_${s.idSoal}"]:checked`);
+                jawabanList.push({ idSoal: s.idSoal, jawaban: Array.from(els).map(e => e.value) });
+            } else if (s.tipe === "PGK_KATEGORI") {
+                let katObj = {};
+                s.opsi.forEach((p, pIdx) => {
+                    let el = document.querySelector(`input[name="soal_${s.idSoal}_${pIdx}"]:checked`);
+                    katObj[p] = el ? el.value : "";
+                });
+                jawabanList.push({ idSoal: s.idSoal, jawaban: katObj });
+            }
+        });
+
+        const user = JSON.parse(localStorage.getItem("user")) || { id: "GUEST" };
+        document.getElementById("containerSoal").innerHTML = "Mengirim jawaban...";
+
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: "submitUjian",
+                    idSiswa: user.id,
+                    idMapel: selectedMapelId,
+                    jawaban: jawabanList,
+                    pelanggaran: jumlahPelanggaran
+                })
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+                alert(`Ujian Selesai! Nilai Anda: ${data.nilai}`);
+                window.location.href = "index.html";
+            }
+        } catch (e) {
+            alert("Gagal mengirim jawaban.");
+        }
+    }
+
+    window.onload = loadMapelUjian;
+</script>
+</body>
+</html>
