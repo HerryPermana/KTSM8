@@ -23,6 +23,20 @@
 <body class="py-4">
 
 <div class="container" style="max-width: 900px;">
+
+<div id="login-section" style="max-width: 400px; margin: 50px auto; text-align: center; font-family: sans-serif;">
+    <h2>Login Guru</h2>
+    <input type="text" id="input-id-guru" placeholder="Masukkan ID Guru (cth: GURU-01)" style="padding: 10px; width: 80%; margin-bottom: 10px;">
+    <br>
+    <button onclick="loginGuru()" style="padding: 10px 20px; cursor: pointer;">Masuk</button>
+    <p id="pesan-login" style="color: red;"></p>
+  </div>
+
+  <!-- BAGIAN INPUT SOAL (Awalnya disembunyikan dengan display: none) -->
+  <div id="main-section" style="display: none;">
+    <!-- MASUKKAN SELURUH FORM INPUT SOAL ANDA YANG LAMA DI SINI -->
+    <!-- Mulai dari judul "Input Soal Ujian", dropdown mapel, tabel soal, dll -->
+  </div>
     
     <!-- HEADER & PILIH MAPEL -->
     <div class="card shadow-sm mb-4 border-0">
@@ -499,6 +513,54 @@
         loadMapel();
         ubahTipeSoal();
     };
+
+    function loginGuru() {
+  const idGuru = document.getElementById("input-id-guru").value;
+  const pesanLogin = document.getElementById("pesan-login");
+
+  if (!idGuru) {
+    pesanLogin.innerText = "ID Guru tidak boleh kosong!";
+    return;
+  }
+
+  pesanLogin.innerText = "Mengecek ID Guru...";
+  pesanLogin.style.color = "blue";
+
+  fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action: 'getMapelGuru',
+      idGuru: idGuru
+    })
+  })
+  .then(response => response.json())
+  .then(res => {
+    if (res.status === 'success') {
+      // 1. Sembunyikan bagian login, tampilkan bagian input soal
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("main-section").style.display = "block";
+
+      // 2. Masukkan daftar mapel ke dalam Dropdown (Select)
+      const selectMapel = document.getElementById("mapel-select"); // Pastikan ID ini sesuai dengan ID dropdown Anda
+      selectMapel.innerHTML = '<option value="">-- Pilih Mapel --</option>'; // Reset opsi
+      
+      res.data.forEach(m => {
+        const option = document.createElement("option");
+        option.value = m.idMapel;
+        option.text = m.namaMapel;
+        selectMapel.appendChild(option);
+      });
+
+    } else {
+      pesanLogin.innerText = res.message;
+      pesanLogin.style.color = "red";
+    }
+  })
+  .catch(err => {
+    pesanLogin.innerText = "Terjadi kesalahan jaringan!";
+    pesanLogin.style.color = "red";
+  });
+}
 </script>
 </body>
 </html>
