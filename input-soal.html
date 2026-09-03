@@ -89,8 +89,8 @@
         </div>
     </div>
 
-    <!-- BAGIAN KELOLA SOAL (Disembunyikan sebelum login) -->
-    <div id="main-section" style="display: none;" class="fade-in mx-auto" style="max-width: 900px;">
+    <!-- BAGIAN KELOLA SOAL & TUGAS (Disembunyikan sebelum login) -->
+    <div id="main-section" class="fade-in mx-auto" style="display: none; max-width: 900px;">
         
         <!-- HEADER & PILIH MAPEL -->
         <div class="card mb-4">
@@ -157,7 +157,7 @@
         </div>
 
         <!-- DAFTAR SOAL TERSEDIA -->
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-list-task me-2 text-primary"></i>Daftar Soal Tersedia</h5>
                 <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm" id="jumlahSoalBadge">0 Soal</span>
@@ -172,54 +172,52 @@
             </div>
         </div>
 
+        <!-- FORM INPUT TUGAS / MATERI (Berada di dalam main-section) -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-primary text-white d-flex align-items-center py-3 px-4">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-plus me-2"></i>Input Tugas / Materi Baru</h5>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <form id="formInputTugas" onsubmit="simpanTugas(event)">
+                    <!-- Pilih Mapel -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mata Pelajaran</label>
+                        <select class="form-select bg-light" id="inputTugasMapel" required>
+                            <option value="">-- Pilih Mata Pelajaran --</option>
+                            <!-- Opsi mapel akan terisi otomatis via JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Judul Tugas -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Judul Tugas / Materi</label>
+                        <input type="text" class="form-control" id="inputTugasJudul" placeholder="Contoh: Tugas Mandiri Bab 1 - Aljabar" required>
+                    </div>
+
+                    <!-- Deskripsi / Petunjuk -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Deskripsi / Instruksi</label>
+                        <textarea class="form-control" id="inputTugasDeskripsi" rows="4" placeholder="Tuliskan petunjuk pengerjaan, link referensi, atau instruksi tugas di sini..." required></textarea>
+                    </div>
+
+                    <!-- Deadline -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Batas Waktu (Deadline)</label>
+                        <input type="datetime-local" class="form-control" id="inputTugasDeadline" required>
+                    </div>
+
+                    <!-- Tombol Submit -->
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-bold" id="btnSimpanTugas">
+                        <i class="bi bi-save me-1"></i> Simpan Tugas
+                    </button>
+
+                    <!-- Pesan Status -->
+                    <div id="msgTugas" class="mt-3"></div>
+                </form>
+            </div>
+        </div>
+
     </div>
-</div>
-<div class="container my-4">
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-primary text-white d-flex align-items-center">
-      <i class="bi bi-file-earmark-plus fs-4 me-2"></i>
-      <h5 class="mb-0">Input Tugas / Materi Baru</h5>
-    </div>
-    <div class="card-body p-4">
-      <form id="formInputTugas" onsubmit="simpanTugas(event)">
-        
-        <!-- Pilih Mapel -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Mata Pelajaran</label>
-          <select class="form-select" id="inputTugasMapel" required>
-            <option value="">-- Pilih Mata Pelajaran --</option>
-            <!-- Opsi mapel akan terisi otomatis via JavaScript -->
-          </select>
-        </div>
-
-        <!-- Judul Tugas -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Judul Tugas / Materi</label>
-          <input type="text" class="form-control" id="inputTugasJudul" placeholder="Contoh: Tugas Mandiri Bab 1 - Aljabar" required>
-        </div>
-
-        <!-- Deskripsi / Petunjuk -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Deskripsi / Instruksi</label>
-          <textarea class="form-control" id="inputTugasDeskripsi" rows="4" placeholder="Tuliskan petunjuk pengerjaan, link referensi, atau instruksi tugas di sini..." required></textarea>
-        </div>
-
-        <!-- Deadline -->
-        <div class="mb-3">
-          <label class="form-label fw-bold">Batas Waktu (Deadline)</label>
-          <input type="datetime-local" class="form-control" id="inputTugasDeadline" required>
-        </div>
-
-        <!-- Tombol Submit -->
-        <button type="submit" class="btn btn-primary px-4" id="btnSimpanTugas">
-          <i class="bi bi-save me-1"></i> Simpan Tugas
-        </button>
-
-        <!-- Pesan Status -->
-        <div id="msgTugas" class="mt-3"></div>
-      </form>
-    </div>
-  </div>
 </div>
     
 <!-- FOOTER -->
@@ -280,6 +278,7 @@
                 });
                 
                 ubahTipeSoal();
+                loadMapelTugas(); // Memuat mapel untuk form tugas setelah sukses login
             } else {
                 pesanLogin.innerHTML = `<i class="bi bi-x-circle-fill"></i> ${res.message}`;
                 pesanLogin.className = "text-center mt-3 fw-semibold small text-danger";
@@ -308,6 +307,8 @@
                     Pilih Mata Pelajaran di atas untuk melihat daftar soal.
                 </div>`;
             document.getElementById("jumlahSoalBadge").innerText = "0 Soal";
+            document.getElementById("formInputTugas").reset();
+            document.getElementById("msgTugas").innerHTML = "";
             resetFormToTambah();
         }
     }
@@ -669,82 +670,78 @@
         }
     }
 
-    // 1. Fungsi untuk Menyimpan Tugas ke Google Sheet
-async function simpanTugas(e) {
-    e.preventDefault();
+    // --- LOGIKA SIMPAN TUGAS ---
+    async function simpanTugas(e) {
+        e.preventDefault();
 
-    const btn = document.getElementById("btnSimpanTugas");
-    const msg = document.getElementById("msgTugas");
+        const btn = document.getElementById("btnSimpanTugas");
+        const msg = document.getElementById("msgTugas");
 
-    const idMapel = document.getElementById("inputTugasMapel").value;
-    const judul = document.getElementById("inputTugasJudul").value.trim();
-    const deskripsi = document.getElementById("inputTugasDeskripsi").value.trim();
-    const deadline = document.getElementById("inputTugasDeadline").value;
+        const idMapel = document.getElementById("inputTugasMapel").value;
+        const judul = document.getElementById("inputTugasJudul").value.trim();
+        const deskripsi = document.getElementById("inputTugasDeskripsi").value.trim();
+        const deadline = document.getElementById("inputTugasDeadline").value;
 
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
-    msg.innerHTML = '';
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+        msg.innerHTML = '';
 
-    try {
-        const res = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                action: "addTugas",
-                idMapel: idMapel,
-                judul: judul,
-                deskripsi: deskripsi,
-                deadline: deadline
-            })
-        });
-        
-        const data = await res.json();
-
-        if (data.status === "success") {
-            msg.innerHTML = `
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i><strong>Berhasil!</strong> ${data.message} (ID Tugas: <code>${data.idTugas}</code>)
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>`;
-            document.getElementById("formInputTugas").reset();
-        } else {
-            msg.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle me-1"></i> Gagal: ${data.message}</div>`;
-        }
-    } catch (err) {
-        msg.innerHTML = '<div class="alert alert-danger"><i class="bi bi-wifi-off me-1"></i> Gagal terhubung ke server Apps Script.</div>';
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-save me-1"></i> Simpan Tugas';
-    }
-}
-
-// 2. Fungsi untuk Memuat Daftar Mapel ke Dropdown Tugas (Bisa dipanggil saat halaman dibuka)
-async function loadMapelTugas() {
-    const select = document.getElementById("inputTugasMapel");
-    if (!select) return;
-
-    try {
-        const res = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "getMapel" })
-        });
-        const data = await res.json();
-        if (data.status === "success") {
-            select.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-            data.mapel.forEach(m => {
-                select.innerHTML += `<option value="${m.idMapel}">${m.namaMapel} (${m.idMapel})</option>`;
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({
+                    action: "addTugas",
+                    idMapel: idMapel,
+                    judul: judul,
+                    deskripsi: deskripsi,
+                    deadline: deadline
+                })
             });
-        }
-    } catch (e) {
-        select.innerHTML = '<option value="">Gagal memuat daftar mapel</option>';
-    }
-}
+            
+            const data = await res.json();
 
-// Panggil fungsi ini saat halaman dimuat
-document.addEventListener("DOMContentLoaded", () => {
-    loadMapelTugas();
-});
+            if (data.status === "success") {
+                msg.innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show mt-3 mb-0" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i><strong>Berhasil!</strong> ${data.message} (ID Tugas: <code>${data.idTugas}</code>)
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+                document.getElementById("formInputTugas").reset();
+            } else {
+                msg.innerHTML = `<div class="alert alert-danger mt-3 mb-0"><i class="bi bi-x-circle me-1"></i> Gagal: ${data.message}</div>`;
+            }
+        } catch (err) {
+            msg.innerHTML = '<div class="alert alert-danger mt-3 mb-0"><i class="bi bi-wifi-off me-1"></i> Gagal terhubung ke server Apps Script.</div>';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-save me-1"></i> Simpan Tugas';
+        }
+    }
+
+    // --- FUNGSI MEMUAT MAPEL UNTUK FORM TUGAS ---
+    async function loadMapelTugas() {
+        const select = document.getElementById("inputTugasMapel");
+        if (!select) return;
+
+        try {
+            const res = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "getMapel" })
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+                select.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+                data.mapel.forEach(m => {
+                    select.innerHTML += `<option value="${m.idMapel}">${m.namaMapel} (${m.idMapel})</option>`;
+                });
+            }
+        } catch (e) {
+            select.innerHTML = '<option value="">Gagal memuat daftar mapel</option>';
+        }
+    }
+
 </script>
 </body>
 </html>
