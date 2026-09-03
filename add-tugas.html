@@ -1,1 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tambah Tugas Baru</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .card { background: #ffffff; padding: 28px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); width: 100%; max-width: 480px; }
+    h2 { margin-bottom: 20px; color: #333333; font-size: 22px; text-align: center; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; color: #444444; font-size: 14px; }
+    input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    input:focus, textarea:focus { border-color: #0d6efd; }
+    textarea { resize: vertical; height: 100px; }
+    button { width: 100%; padding: 12px; background-color: #0d6efd; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 8px; }
+    button:hover { background-color: #0b5ed7; }
+    button:disabled { background-color: #9ec5fe; cursor: not-allowed; }
+    .alert { padding: 12px; margin-bottom: 16px; border-radius: 6px; display: none; text-align: center; font-size: 14px; font-weight: 500; }
+    .alert-success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+    .alert-danger { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+  </style>
+</head>
+<body>
 
+<div class="card">
+  <h2>Form Tambah Tugas</h2>
+  
+  <div id="alertBox" class="alert"></div>
+
+  <form id="formTambahTugas">
+    <div class="form-group">
+      <label for="idMapel">ID Mapel</label>
+      <input type="text" id="idMapel" placeholder="Contoh: MP001" required>
+    </div>
+
+    <div class="form-group">
+      <label for="judul">Judul Tugas / Materi</label>
+      <input type="text" id="judul" placeholder="Masukkan judul tugas" required>
+    </div>
+
+    <div class="form-group">
+      <label for="deskripsi">Deskripsi / Instruksi</label>
+      <textarea id="deskripsi" placeholder="Masukkan detail atau instruksi tugas..." required></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="deadline">Batas Waktu (Deadline)</label>
+      <input type="datetime-local" id="deadline" required>
+    </div>
+
+    <button type="submit" id="btnSubmit">Simpan Tugas</button>
+  </form>
+</div>
+
+<script>
+  // Tempelkan URL Web App dari Google Apps Script Anda di sini
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbywDP0gKO4igtNlBxvBJHlGcspfPI5mVy1h745MryIpyQ_d2qvzvy8tPDBsZfNVdpwT/exec';
+
+  const form = document.getElementById('formTambahTugas');
+  const btnSubmit = document.getElementById('btnSubmit');
+  const alertBox = document.getElementById('alertBox');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    btnSubmit.disabled = true;
+    btnSubmit.innerText = 'Menyimpan...';
+    hideAlert();
+
+    const payload = {
+      action: 'addTugas',
+      idMapel: document.getElementById('idMapel').value.trim(),
+      judul: document.getElementById('judul').value.trim(),
+      deskripsi: document.getElementById('deskripsi').value.trim(),
+      deadline: document.getElementById('deadline').value
+    };
+
+    fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        showAlert(data.message || 'Tugas berhasil disimpan!', 'success');
+        form.reset();
+      } else {
+        showAlert('Gagal: ' + data.message, 'danger');
+      }
+    })
+    .catch(err => {
+      showAlert('Terjadi kesalahan jaringan atau URL Web App salah!', 'danger');
+      console.error(err);
+    })
+    .finally(() => {
+      btnSubmit.disabled = false;
+      btnSubmit.innerText = 'Simpan Tugas';
+    });
+  });
+
+  function showAlert(message, type) {
+    alertBox.className = `alert alert-${type}`;
+    alertBox.innerText = message;
+    alertBox.style.display = 'block';
+  }
+
+  function hideAlert() {
+    alertBox.style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
