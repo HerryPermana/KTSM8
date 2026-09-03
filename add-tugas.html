@@ -11,9 +11,12 @@
     h2 { margin-bottom: 20px; color: #333333; font-size: 22px; text-align: center; }
     .form-group { margin-bottom: 16px; }
     label { display: block; margin-bottom: 6px; font-weight: 600; color: #444444; font-size: 14px; }
-    input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s; }
-    input:focus, textarea:focus { border-color: #0d6efd; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #cccccc; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s; background-color: #fff; }
+    input:focus, select:focus, textarea:focus { border-color: #0d6efd; }
     textarea { resize: vertical; height: 100px; }
+    .btn-group { display: flex; gap: 8px; }
+    .btn-secondary { background-color: #6c757d; width: auto; white-space: nowrap; }
+    .btn-secondary:hover { background-color: #5c636a; }
     button { width: 100%; padding: 12px; background-color: #0d6efd; color: #ffffff; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 8px; }
     button:hover { background-color: #0b5ed7; }
     button:disabled { background-color: #9ec5fe; cursor: not-allowed; }
@@ -30,9 +33,21 @@
   <div id="alertBox" class="alert"></div>
 
   <form id="formTambahTugas">
+    <!-- Input ID Guru untuk mengambil daftar Mapel -->
     <div class="form-group">
-      <label for="idMapel">ID Mapel</label>
-      <input type="text" id="idMapel" placeholder="Contoh: MP001" required>
+      <label for="idGuru">ID Guru</label>
+      <div class="btn-group">
+        <input type="text" id="idGuru" placeholder="Masukkan ID Guru (contoh: GURU01)" required>
+        <button type="button" id="btnCariMapel" class="btn-secondary" onclick="muatMapelGuru()">Muat Mapel</button>
+      </div>
+    </div>
+
+    <!-- Dropdown Mapel yang terisi otomatis -->
+    <div class="form-group">
+      <label for="idMapel">Pilih Mata Pelajaran</label>
+      <select id="idMapel" required disabled>
+        <option value="">-- Isi ID Guru dan klik Muat Mapel --</option>
+      </select>
     </div>
 
     <div class="form-group">
@@ -55,13 +70,65 @@
 </div>
 
 <script>
-  // Tempelkan URL Web App dari Google Apps Script Anda di sini
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbywDP0gKO4igtNlBxvBJHlGcspfPI5mVy1h745MryIpyQ_d2qvzvy8tPDBsZfNVdpwT/exec';
 
   const form = document.getElementById('formTambahTugas');
   const btnSubmit = document.getElementById('btnSubmit');
   const alertBox = document.getElementById('alertBox');
+  const selectMapel = document.getElementById('idMapel');
 
+  // Fungsi untuk mengambil pilihan mapel berdasarkan ID Guru
+  function muatMapelGuru() {
+    const idGuru = document.getElementById('idGuru').value.trim();
+    const btnCari = document.getElementById('btnCariMapel');
+
+    if (!idGuru) {
+      showAlert('Silakan masukkan ID Guru terlebih dahulu!', 'danger');
+      return;
+    }
+
+    btnCari.disabled = true;
+    btnCari.innerText = 'Cari...';
+    selectMapel.innerHTML = '<option value="">Memuat data mapel...</option>';
+    selectMapel.disabled = true;
+    hideAlert();
+
+    fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'getMapelGuru',
+        idGuru: idGuru
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success' && data.data.length > 0) {
+        selectMapel.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
+        data.data.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.idMapel;
+          option.textContent = `${item.namaMapel} (${item.idMapel})`;
+          selectMapel.appendChild(option);
+        });
+        selectMapel.disabled = false;
+        showAlert('Daftar mapel berhasil dimuat!', 'success');
+      } else {
+        selectMapel.innerHTML = '<option value="">-- Mapel Tidak Ditemukan --</option>';
+        showAlert(data.message || 'ID Guru tidak memiliki mata pelajaran.', 'danger');
+      }
+    })
+    .catch(err => {
+      selectMapel.innerHTML = '<option value="">-- Gagal Memuat --</option>';
+      showAlert('Gagal terhubung ke server!', 'danger');
+      console.error(err);
+    })
+    .finally(() => {
+      btnCari.disabled = false;
+      btnCari.innerText = 'Muat Mapel';
+    });
+  }
+
+  // Event submit untuk menyimpan tugas
   form.addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -71,7 +138,7 @@
 
     const payload = {
       action: 'addTugas',
-      idMapel: document.getElementById('idMapel').value.trim(),
+      idMapel: selectMapel.value,
       judul: document.getElementById('judul').value.trim(),
       deskripsi: document.getElementById('deskripsi').value.trim(),
       deadline: document.getElementById('deadline').value
@@ -86,6 +153,8 @@
       if (data.status === 'success') {
         showAlert(data.message || 'Tugas berhasil disimpan!', 'success');
         form.reset();
+        selectMapel.innerHTML = '<option value="">-- Isi ID Guru dan klik Muat Mapel --</option>';
+        selectMapel.disabled = true;
       } else {
         showAlert('Gagal: ' + data.message, 'danger');
       }
